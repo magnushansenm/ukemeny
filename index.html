@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ukemeny og handleliste</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#EEF2EF;--surface:#FFFFFF;--ink:#16302A;--muted:#5B6F69;--line:#CBD7D2;--accent:#1F6F5C;--onaccent:#FFFFFF;--fri:#F2C14E;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1B18;--surface:#172622;--ink:#E6F0EC;--muted:#93A8A1;--line:#2B3F39;--accent:#6FD0B3;--onaccent:#0F1B18;--fri:#E0AE3A}}
+:root[data-theme="dark"]{--bg:#0F1B18;--surface:#172622;--ink:#E6F0EC;--muted:#93A8A1;--line:#2B3F39;--accent:#6FD0B3;--onaccent:#0F1B18;--fri:#E0AE3A}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:44rem;margin:0 auto;padding:1.5rem 1rem 0}
+h1{font-size:clamp(2.2rem,8vw,3.4rem);line-height:1;margin:0 0 .5rem;font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.25rem;margin:2rem 0 .75rem;font-weight:600}
+.lead{color:var(--muted);margin:0 0 1.5rem;max-width:34rem}
+.controls{background:var(--surface);border:1px solid var(--line);border-radius:.75rem;padding:1rem;display:grid;gap:1rem}
+.row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+label.n{display:flex;gap:.5rem;align-items:center;font-weight:600}
+input[type=number]{width:4.5rem;font:inherit;padding:.4rem .5rem;border:1px solid var(--line);border-radius:.4rem;background:var(--bg);color:var(--ink)}
+fieldset{border:0;padding:0;margin:0}
+legend{font-weight:600;margin-bottom:.4rem;padding:0}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.chip span{display:inline-block;padding:.35rem .8rem;border:1px solid var(--line);border-radius:2rem;background:var(--bg)}
+.chip input:checked+span{background:var(--accent);color:var(--onaccent);border-color:var(--accent)}
+.chip input:focus-visible+span,button:focus-visible,.item input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:.5rem;padding:.55rem 1rem;border:1px solid var(--accent);background:var(--accent);color:var(--onaccent)}
+button.sec{background:transparent;color:var(--ink);border-color:var(--line)}
+button.small{padding:.25rem .6rem;font-weight:400;font-size:.9rem}
+ol.plan{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+.day{display:grid;grid-template-columns:6.5rem 1fr auto;gap:.75rem;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:.6rem;padding:.7rem .9rem}
+.day.fri{position:relative;overflow:hidden;border-left-color:var(--fri);background:linear-gradient(90deg,rgba(242,193,78,.14),transparent 45%),var(--surface);padding-top:1.1rem}
+.day.fri::before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:repeating-linear-gradient(90deg,#E05A47 0 18px,#F2C14E 18px 36px,#2AA198 36px 54px,#6BBF59 54px 72px)}
+.dn{color:var(--muted);font-weight:600}
+.dish{font-size:1.15rem;font-weight:600}
+.dish small{display:block;color:var(--muted);font-weight:400;font-size:.85rem}
+@media (max-width:30rem){.day{grid-template-columns:1fr auto}.dn{grid-column:1/-1;margin-bottom:-.5rem}}
+ul.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:.6rem}
+.item{display:flex;gap:.7rem;align-items:center;padding:.55rem .9rem;border-bottom:1px solid var(--line);cursor:pointer}
+.item:last-child{border-bottom:0}
+.item input{width:1.2rem;height:1.2rem;accent-color:var(--accent)}
+.item .q{margin-left:auto;color:var(--muted);white-space:nowrap}
+.item input:checked~span{text-decoration:line-through;color:var(--muted)}
+.gruppe{padding:.4rem .9rem;font-weight:600;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line)}
+.dish a{color:var(--accent)}
+.dish details{font-weight:400;font-size:.95rem;margin-top:.3rem}
+.dish summary{cursor:pointer;color:var(--accent)}
+.dish ol{margin:.4rem 0 0;padding-left:1.2rem}
+.knapper{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
+.ekstra{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+.ekstra input[type=text],.ekstra select{font:inherit;padding:.45rem .6rem;border:1px solid var(--line);border-radius:.4rem;background:var(--bg);color:var(--ink)}
+.ekstra input[type=text]{flex:1 1 10rem}
+.verktoy{position:sticky;bottom:0;z-index:5;display:flex;gap:.6rem;margin:1.5rem -1rem 0;padding:.7rem 1rem calc(.7rem + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+.verktoy button{flex:1 1 0;min-width:0;text-align:center;font-size:1rem;padding:.7rem .5rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.note{color:var(--muted);font-size:.9rem;margin:.5rem 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Ukemeny</h1>
+<p class="lead">Velg dagene du vil planlegge, og få middager og én samlet handleliste. Taco står alltid på fredag.</p>
+
+<section class="controls" aria-label="Innstillinger">
+  <label class="n">Antall personer <input type="number" id="pers" min="1" max="12" value="4"></label>
+  <fieldset><legend>Dager</legend><div class="row" id="dager"></div></fieldset>
+  <div class="row"><button id="lag">Lag ukemeny</button></div>
+</section>
+
+<h2>Middager</h2>
+<ol class="plan" id="plan"></ol>
+<p class="note" id="planNote"></p>
+
+<h2>Handleliste</h2>
+<ul class="list" id="handle"></ul>
+<p class="note">Kryss av det du har hjemme, så tas det ikke med når du kopierer. Mengdene er regnet om fra 4 porsjoner til antall personer du har valgt, og stykkvarer rundes opp.</p>
+<div class="ekstra"><input type="text" id="eNavn" placeholder="Ekstravare, for eksempel dopapir" aria-label="Ekstravare"><select id="eAvd" aria-label="Avdeling"></select><button class="sec" id="eLegg">Legg til</button></div>
+
+<h2>Sjekk om du har hjemme</h2>
+<ul class="list" id="basis"></ul>
+<p class="note">Mangler du noe? Trykk «Legg på lista», så blir varen med når du kopierer.</p>
+
+<div class="verktoy">
+  <button id="kopier">Kopier lista</button>
+  <span class="sr" id="msg" role="status"></span>
+</div>
+</main>
+
+<script>
+const RETTER = [
+  { navn: "Pølsegryte med fullkornspasta", url: "https://mills.no/melange/oppskrift/polsegryte-med-fullkornspasta/", ing: [
+    ["røkt kjøttpølse",500,"g"],["løk",1,"stk"],["matolje",2,"ss",1],["gulrot",2,"stk"],
+    ["fullkornspasta",200,"g"],["grønnsaksbuljong (terning)",2,"stk"],["hakkede hermetiske tomater",1,"boks"],
+    ["tomatpuré",2,"ss"],["salt",0.5,"ts",1],["pepper",0.25,"ts",1],["paprikapulver",1,"ts",1],
+    ["brokkoli",1,"stk"],["crème fraîche",1.5,"dl"],["revet parmesan",50,"g"] ]},
+  { navn: "Tomatsuppe med kokt egg", url: "https://www.matprat.no/oppskrifter/familien/tomatsuppe-med-kokt-egg/", ing: [
+    ["egg",4,"stk"],["løk",1,"stk"],["hvitløksbåt",2,"stk",1],["olivenolje",2,"ss",1],["tomatpuré",4,"ss"],
+    ["hakkede hermetiske tomater",2,"boks"],["grønnsaksbuljong (terning)",2,"stk"],["sukker",1,"ss",1],
+    ["frisk basilikum",0.5,"potte"],["pepper",0.25,"ts",1] ]},
+  { navn: "Pizza", dager: [5,6], url: "https://www.matprat.no/oppskrifter/kos/pizzadeig/", urlTekst: "Se oppskrift på deig", ing: [
+    ["hvetemel",7,"dl"],["fersk gjær",0.5,"pk"],["matolje",2,"ss",1],["salt",0.5,"ts",1],["Toro pizzafyll",1,"stk"],["kjøttdeig",400,"g"] ]},
+  { navn: "Kjøttdeigpai", url: "https://www.matprat.no/oppskrifter/gjester/kjottdeigpai/", ing: [
+    ["ferdig paideig",1,"pk"],["kjøttdeig",400,"g"],["vårløk",1,"bunt"],["hvitløksbåt",1,"stk",1],
+    ["matolje",2,"ss",1],["salt",0.5,"ts",1],["pepper",0.5,"ts",1],["løk",2,"stk"],
+    ["melk",2,"dl"],["egg",2,"stk"],["revet ost",15,"g"] ]},
+  { navn: "Taco", fredag: true, ing: [
+    ["løk",1,"stk"],["tomat",1,"stk"],["hvitløksbåt",1,"stk",1],["mango",1,"stk"],["avocado",1,"stk"],
+    ["kjøttdeig",400,"g"],["tacokrydder",1,"pk"],["tacolefser",1,"pk"],["salsa",1,"glass"],
+    ["bønner",1,"boks"],["mais",1,"boks"],["revet ost",200,"g"],["lettrømme",3,"dl"],["tortilla chips",1,"pose"],["agurk",1,"stk"] ]},
+  { navn: "Spagetti bolognese", url: "https://www.matprat.no/oppskrifter/familien/spagetti-bolognese/", ing: [
+    ["kjøttdeig",400,"g"],["matolje",2,"ss",1],["gulrot",1,"stk"],["løk",1,"stk"],["stangselleri",2,"stk"],
+    ["tomatpuré",2,"ss"],["hakkede hermetiske tomater",1,"boks"],["kjøttbuljong (terning)",1,"stk"],
+    ["salt",1,"ts",1],["pepper",0.5,"ts",1],["malt muskat",0.25,"ts",1],["sukker",0.17,"ss",1],
+    ["fullkornspagetti",400,"g"] ]}
+];
+const BUTIKK = ["Frukt og grønt","Kjøtt","Hermetikk og tørrvarer","Meieri og egg","Snacks og annet"];
+const KAT = {
+  "løk":0,"tomat":0,"gulrot":0,"brokkoli":0,"hvitløksbåt":0,"frisk basilikum":0,"vårløk":0,"mango":0,"avocado":0,"agurk":0,
+  "røkt kjøttpølse":1,"kjøttdeig":1,
+  "fullkornspasta":2,"grønnsaksbuljong (terning)":2,"hakkede hermetiske tomater":2,"tomatpuré":2,"hvetemel":2,"fullkornspagetti":2,"kjøttbuljong (terning)":2,"stangselleri":0,
+  "Toro pizzafyll":2,"tacokrydder":2,"tacolefser":2,"salsa":2,"bønner":2,"mais":2,
+  "ferdig paideig":3,"revet ost":3,"revet parmesan":3,"crème fraîche":3,"egg":3,"melk":3,"lettrømme":3,"fersk gjær":3,
+  "tortilla chips":4,
+  "matolje":2,"olivenolje":2,"salt":2,"pepper":2,"paprikapulver":2,"sukker":2,"malt muskat":2
+};
+const kat = n => (Object.prototype.hasOwnProperty.call(KAT, n) ? KAT[n] : BUTIKK.length - 1);
+const DAGER = ["Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag","Søndag"];
+const RUND_OPP = ["stk","boks","pk","potte","glass","bunt","pose"];
+const $ = id => document.getElementById(id);
+let valgt = new Set([0,1,2,3,4,5,6]), plan = [], avkrysset = new Set(), ekstra = [], flyttet = new Set();
+
+const kandidater = d => RETTER.map((_, i) => i).filter(i => !RETTER[i].fredag && (!RETTER[i].dager || RETTER[i].dager.includes(d)));
+const taco = () => RETTER.findIndex(r => r.fredag);
+
+function lagPlan(){
+  const låst = new Map(plan.filter(p => p.lås && valgt.has(p.d) && p.r >= 0).map(p => [p.d, p.r]));
+  const brukt = {}; let forrige;
+  avkrysset.clear(); flyttet.clear();
+  låst.forEach(r => { brukt[r] = (brukt[r] || 0) + 1; });
+  plan = [...valgt].sort((a,b)=>a-b).map(d => {
+    if (d === 4 && taco() >= 0) return { d, r: taco() };
+    if (låst.has(d)){ forrige = låst.get(d); return { d, r: forrige, lås: true }; }
+    const k = kandidater(d);
+    if (!k.length) return { d, r: -1 };
+    const minst = Math.min(...k.map(i => brukt[i] || 0));
+    let pool = k.filter(i => (brukt[i] || 0) === minst && i !== forrige);
+    if (!pool.length) pool = k.filter(i => (brukt[i] || 0) === minst);
+    const r = pool[Math.floor(Math.random()*pool.length)];
+    brukt[r] = (brukt[r] || 0) + 1; forrige = r;
+    return { d, r };
+  });
+  tegn();
+}
+function bytt(i){
+  if (plan[i].lås) return;
+  const muligeRetter = kandidater(plan[i].d).filter(r => r !== plan[i].r);
+  if (!muligeRetter.length) return;
+  plan[i].r = muligeRetter[Math.floor(Math.random()*muligeRetter.length)];
+  tegn();
+}
+function togglLas(i){ plan[i].lås = !plan[i].lås; tegn(); }
+function fmt(m, e){
+  const n = RUND_OPP.includes(e) ? Math.ceil(m - 1e-9) : Math.round(m*100)/100;
+  return n.toLocaleString("nb-NO", { maximumFractionDigits: 2 }) + " " + e;
+}
+function samleListe(){
+  const f = (parseInt($("pers").value,10) || 4) / 4, kart = new Map();
+  plan.filter(p => p.r >= 0).forEach(p => RETTER[p.r].ing.forEach(([n,m,e,b]) => {
+    const k = n + "|" + e;
+    if (!kart.has(k)) kart.set(k, { k, n, e, b: !!b, m: 0, kat: kat(n) });
+    kart.get(k).m += m * f;
+  }));
+  ekstra.forEach(x => kart.set("ekstra|" + x.n, { k: "ekstra|" + x.n, n: x.n, e: "", b: false, m: 0, kat: x.kat, ekstra: true }));
+  const alle = [...kart.values()].sort((a,b) => a.kat - b.kat || a.n.localeCompare(b.n, "nb"));
+  return { handle: alle.filter(x => !x.b || flyttet.has(x.k)), basis: alle.filter(x => x.b && !flyttet.has(x.k)) };
+}
+function liste(el, items, gruppert){
+  el.innerHTML = items.length ? "" : '<li class="item"><span>Ingenting her ennå.</span></li>';
+  let sist = -1;
+  items.forEach(x => {
+    if (gruppert && x.kat !== sist){
+      sist = x.kat;
+      const h = document.createElement("li"); h.className = "gruppe"; h.textContent = BUTIKK[x.kat]; el.appendChild(h);
+    }
+    const li = document.createElement("li");
+    li.innerHTML = '<label class="item" style="border:0;width:100%"><input type="checkbox"><span></span><span class="q"></span></label>';
+    const cb = li.querySelector("input"); cb.checked = avkrysset.has(x.k);
+    cb.onchange = () => { if (cb.checked) avkrysset.add(x.k); else avkrysset.delete(x.k); lagreTilstand(); };
+    li.querySelectorAll("span")[0].textContent = x.n;
+    li.querySelectorAll("span")[1].textContent = (x.ekstra || x.b) ? "" : fmt(x.m, x.e);
+    if (x.ekstra){
+      const fjern = document.createElement("button"); fjern.className = "sec small"; fjern.textContent = "Fjern";
+      fjern.setAttribute("aria-label", "Fjern " + x.n);
+      fjern.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); ekstra = ekstra.filter(e => "ekstra|" + e.n !== x.k); lagreEkstra(); tegn(); };
+      li.querySelector("label").appendChild(fjern);
+    } else if (x.b){
+      const f = flyttet.has(x.k), kn = document.createElement("button");
+      kn.className = "sec small"; kn.textContent = f ? "Angre" : "Legg på lista";
+      kn.setAttribute("aria-label", (f ? "Flytt tilbake til basisvarer: " : "Legg på handlelisten: ") + x.n);
+      kn.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); if (f) flyttet.delete(x.k); else flyttet.add(x.k); tegn(); };
+      li.querySelector("label").appendChild(kn);
+    }
+    li.style.borderBottom = "1px solid var(--line)";
+    el.appendChild(li);
+  });
+}
+function tegn(){
+  const ol = $("plan");
+  if (!plan.length){ ol.innerHTML = '<li class="note">Velg minst én dag og trykk «Lag ukemeny».</li>'; }
+  else {
+    ol.innerHTML = "";
+    plan.forEach((p, i) => {
+      if (p.r < 0){
+        const li0 = document.createElement("li"); li0.className = "day";
+        li0.innerHTML = '<span class="dn"></span><span class="dish"></span><span></span>';
+        li0.children[0].textContent = DAGER[p.d]; li0.children[1].textContent = "Ingen rett passer denne dagen";
+        ol.appendChild(li0); return;
+      }
+      const r = RETTER[p.r], li = document.createElement("li");
+      li.className = "day" + (r.fredag ? " fri" : "");
+      li.innerHTML = '<span class="dn"></span><span class="dish"></span><span></span>';
+      li.children[0].textContent = DAGER[p.d];
+      li.children[1].textContent = r.navn;
+      if (r.url){
+        const a = document.createElement("a"); a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = r.urlTekst || "Se oppskrift";
+        const w = document.createElement("small"); w.appendChild(a); li.children[1].appendChild(w);
+      }
+      if (r.steg && r.steg.length){
+        const d = document.createElement("details"), sm = document.createElement("summary"), o = document.createElement("ol");
+        sm.textContent = "Vis fremgangsmåte";
+        r.steg.forEach(t => { const x = document.createElement("li"); x.textContent = t; o.appendChild(x); });
+        d.appendChild(sm); d.appendChild(o); li.children[1].appendChild(d);
+      }
+      if (r.eksempel){ const s = document.createElement("small"); s.textContent = "Eksempelingredienser – bytt ut med dine egne"; li.children[1].appendChild(s); }
+      if (r.fredag){
+        const b = document.createElement("span");
+        b.textContent = "🌮";
+        b.setAttribute("aria-hidden", "true");
+        b.style.fontSize = "1.4rem";
+        li.children[2].appendChild(b);
+      } else {
+        const k = document.createElement("span"); k.className = "knapper";
+        if (!p.lås){ const b = document.createElement("button"); b.className = "sec small"; b.textContent = "Bytt rett"; b.onclick = () => bytt(i); k.appendChild(b); }
+        const l = document.createElement("button"); l.className = (p.lås ? "" : "sec ") + "small"; l.textContent = p.lås ? "Låst" : "Lås";
+        l.setAttribute("aria-pressed", p.lås ? "true" : "false"); l.onclick = () => togglLas(i); k.appendChild(l);
+        li.children[2].appendChild(k);
+      }
+      ol.appendChild(li);
+    });
+  }
+  const valgte = plan.filter(p => p.r >= 0 && !RETTER[p.r].fredag).map(p => p.r);
+  $("planNote").textContent = new Set(valgte).size < valgte.length ? "Noen retter går igjen fordi få retter passer disse dagene. Legg til flere i listen RETTER i koden." : "";
+  const l = samleListe();
+  liste($("handle"), l.handle, true); liste($("basis"), l.basis);
+  lagreTilstand();
+}
+function tekstliste(){
+  return samleListe().handle.filter(x => !avkrysset.has(x.k)).map(x => (x.ekstra || x.b) ? x.n : fmt(x.m, x.e) + " " + x.n).join("\n");
+}
+async function kopier(){
+  const t = tekstliste(), msg = $("msg"), kn = $("kopier");
+  let ok = true;
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) {
+    try {
+      const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+      ok = document.execCommand("copy"); ta.remove();
+    } catch (e2) { ok = false; }
+  }
+  msg.textContent = ok ? "Lista er kopiert." : "Kunne ikke kopiere. Marker lista og kopier for hånd.";
+  kn.textContent = ok ? "Kopiert ✓" : "Kopiering feilet";
+  setTimeout(() => { msg.textContent = ""; kn.textContent = "Kopier lista"; }, 2500);
+}
+const TILSTAND = "ukemenyTilstand";
+function lagreTilstand(){
+  try {
+    localStorage.setItem(TILSTAND, JSON.stringify({
+      v: 1,
+      pers: $("pers").value,
+      dager: [...valgt],
+      plan: plan.map(p => ({ d: p.d, r: p.r >= 0 ? RETTER[p.r].navn : null, lås: !!p.lås })),
+      avkrysset: [...avkrysset],
+      flyttet: [...flyttet]
+    }));
+  } catch (e) {}
+}
+function lastTilstand(){
+  try {
+    const t = JSON.parse(localStorage.getItem(TILSTAND) || "null");
+    if (!t || t.v !== 1) return false;
+    const p = parseInt(t.pers, 10);
+    if (p >= 1 && p <= 12) $("pers").value = p;
+    if (Array.isArray(t.dager)) valgt = new Set(t.dager.filter(n => Number.isInteger(n) && n >= 0 && n <= 6));
+    if (Array.isArray(t.avkrysset)) avkrysset = new Set(t.avkrysset.filter(x => typeof x === "string"));
+    if (Array.isArray(t.flyttet)) flyttet = new Set(t.flyttet.filter(x => typeof x === "string"));
+    if (!Array.isArray(t.plan)) return false;
+    const gyldig = (d, r, navn) => {
+      if (r < 0) return navn === null && kandidater(d).length === 0;
+      if (d === 4 && taco() >= 0) return r === taco();
+      return RETTER[r].fredag ? d === 4 : kandidater(d).includes(r);
+    };
+    const nyPlan = t.plan.map(x => {
+      if (!x || !Number.isInteger(x.d)) return null;
+      const r = x.r === null ? -1 : RETTER.findIndex(y => y.navn === x.r);
+      if (x.r !== null && r < 0) return null;
+      return gyldig(x.d, r, x.r) ? { d: x.d, r, lås: !!x.lås && r >= 0 && !RETTER[r].fredag } : null;
+    });
+    if (nyPlan.some(x => x === null)) return false;
+    const a = nyPlan.map(x => x.d).sort((m, n) => m - n).join(), b = [...valgt].sort((m, n) => m - n).join();
+    if (a !== b) return false;
+    plan = nyPlan;
+    return true;
+  } catch (e) { return false; }
+}
+const gjenopprettet = lastTilstand();
+DAGER.forEach((d, i) => {
+  const l = document.createElement("label"); l.className = "chip";
+  l.innerHTML = '<input type="checkbox"><span></span>';
+  l.querySelector("span").textContent = d.slice(0,3);
+  const cb = l.querySelector("input"); cb.checked = valgt.has(i); cb.setAttribute("aria-label", d);
+  cb.onchange = () => { if (cb.checked) valgt.add(i); else valgt.delete(i); lagreTilstand(); };
+  $("dager").appendChild(l);
+});
+function lagreEkstra(){ try { localStorage.setItem("ekstraVarer", JSON.stringify(ekstra)); } catch (e) {} }
+try {
+  const lagret = JSON.parse(localStorage.getItem("ekstraVarer") || "[]");
+  if (Array.isArray(lagret)) ekstra = lagret.filter(x => x && typeof x.n === "string" && Number.isInteger(x.kat) && x.kat >= 0 && x.kat < BUTIKK.length);
+} catch (e) {}
+[["Automatisk avdeling", -1], ...BUTIKK.map((n, i) => [n, i])].forEach(([t, v]) => {
+  const o = document.createElement("option"); o.value = v; o.textContent = t; $("eAvd").appendChild(o);
+});
+function leggTilEkstra(){
+  const n = $("eNavn").value.trim(); if (!n) return;
+  let v = parseInt($("eAvd").value, 10);
+  if (v < 0) v = kat(n.toLowerCase());
+  if (!ekstra.some(x => x.n.toLowerCase() === n.toLowerCase())) ekstra.push({ n, kat: v });
+  $("eNavn").value = ""; lagreEkstra(); tegn();
+}
+$("eLegg").onclick = leggTilEkstra;
+$("eNavn").onkeydown = e => { if (e.key === "Enter"){ e.preventDefault(); leggTilEkstra(); } };
+$("lag").onclick = lagPlan; $("kopier").onclick = kopier;
+$("pers").onchange = tegn;
+if (gjenopprettet) tegn(); else lagPlan();
+</script>
+</body>
+</html>

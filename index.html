@@ -86,6 +86,7 @@ ul.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px 
 
 <div class="verktoy">
   <button id="kopier">Kopier lista</button>
+  <button class="sec" id="del">Del uken</button>
   <span class="sr" id="msg" role="status"></span>
 </div>
 </main>
@@ -261,19 +262,100 @@ function tegn(){
 function tekstliste(){
   return samleListe().handle.filter(x => !avkrysset.has(x.k)).map(x => (x.ekstra || x.b) ? x.n : fmt(x.m, x.e) + " " + x.n).join("\n");
 }
-async function kopier(){
-  const t = tekstliste(), msg = $("msg"), kn = $("kopier");
-  let ok = true;
-  try { await navigator.clipboard.writeText(t); }
+async function kopierTekst(t){
+  try { await navigator.clipboard.writeText(t); return true; }
   catch (e) {
     try {
       const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
-      ok = document.execCommand("copy"); ta.remove();
-    } catch (e2) { ok = false; }
+      const ok = document.execCommand("copy"); ta.remove(); return ok;
+    } catch (e2) { return false; }
   }
+}
+async function kopier(){
+  const t = tekstliste(), msg = $("msg"), kn = $("kopier");
+  const ok = await kopierTekst(t);
   msg.textContent = ok ? "Lista er kopiert." : "Kunne ikke kopiere. Marker lista og kopier for hånd.";
   kn.textContent = ok ? "Kopiert ✓" : "Kopiering feilet";
   setTimeout(() => { msg.textContent = ""; kn.textContent = "Kopier lista"; }, 2500);
+}
+function pakkTilstand(){
+  return {
+    v: 1,
+    pers: parseInt($("pers").value, 10) || 4,
+    dager: [...valgt],
+    plan: plan.map(p => ({ d: p.d, r: p.r >= 0 ? RETTER[p.r].navn : null, lås: !!p.lås })),
+    avkrysset: [...avkrysset],
+    flyttet: [...flyttet],
+    ekstra: ekstra.map(x => ({ n: x.n, kat: x.kat }))
+  };
+}
+function brukTilstand(t){
+  if (!t || t.v !== 1) return false;
+  const p = parseInt(t.pers, 10);
+  if (p >= 1 && p <= 12) $("pers").value = p;
+  if (Array.isArray(t.dager)) valgt = new Set(t.dager.filter(n => Number.isInteger(n) && n >= 0 && n <= 6));
+  if (Array.isArray(t.avkrysset)) avkrysset = new Set(t.avkrysset.filter(x => typeof x === "string"));
+  if (Array.isArray(t.flyttet)) flyttet = new Set(t.flyttet.filter(x => typeof x === "string"));
+  if (Array.isArray(t.ekstra)){
+    ekstra = t.ekstra.filter(x => x && typeof x.n === "string" && Number.isInteger(x.kat) && x.kat >= 0 && x.kat < BUTIKK.length);
+    lagreEkstra();
+  }
+  if (!Array.isArray(t.plan)) return false;
+  const gyldig = (d, r, navn) => {
+    if (r < 0) return navn === null && kandidater(d).length === 0;
+    if (d === 4 && taco() >= 0) return r === taco();
+    return RETTER[r].fredag ? d === 4 : kandidater(d).includes(r);
+  };
+  const nyPlan = t.plan.map(x => {
+    if (!x || !Number.isInteger(x.d)) return null;
+    const r = x.r === null ? -1 : RETTER.findIndex(y => y.navn === x.r);
+    if (x.r !== null && r < 0) return null;
+    return gyldig(x.d, r, x.r) ? { d: x.d, r, lås: !!x.lås && r >= 0 && !RETTER[r].fredag } : null;
+  });
+  if (nyPlan.some(x => x === null)) return false;
+  const a = nyPlan.map(x => x.d).sort((m, n) => m - n).join(), b = [...valgt].sort((m, n) => m - n).join();
+  if (a !== b) return false;
+  plan = nyPlan;
+  return true;
+}
+function kodTilHash(obj){
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  let bin = "";
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return "#uke=" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function dekodFraHash(){
+  const h = window.location.hash || "";
+  if (!h.startsWith("#uke=")) return null;
+  try {
+    let b64 = h.slice(5).replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch (e) { return null; }
+}
+function lagDelLenke(){
+  const url = new URL(window.location.href);
+  url.hash = kodTilHash(pakkTilstand());
+  return url.toString();
+}
+async function delUken(){
+  const lenke = lagDelLenke(), msg = $("msg"), kn = $("del");
+  if (navigator.share){
+    try {
+      await navigator.share({ title: "Ukemeny og handleliste", url: lenke });
+      msg.textContent = "Delingsmeny åpnet.";
+      return;
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+    }
+  }
+  const ok = await kopierTekst(lenke);
+  msg.textContent = ok ? "Lenke til ukemenyen er kopiert." : "Kunne ikke dele lenken.";
+  kn.textContent = ok ? "Lenke kopiert ✓" : "Deling feilet";
+  setTimeout(() => { msg.textContent = ""; kn.textContent = "Del uken"; }, 2500);
 }
 const TILSTAND = "ukemenyTilstand";
 function lagreTilstand(){
@@ -291,32 +373,22 @@ function lagreTilstand(){
 function lastTilstand(){
   try {
     const t = JSON.parse(localStorage.getItem(TILSTAND) || "null");
-    if (!t || t.v !== 1) return false;
-    const p = parseInt(t.pers, 10);
-    if (p >= 1 && p <= 12) $("pers").value = p;
-    if (Array.isArray(t.dager)) valgt = new Set(t.dager.filter(n => Number.isInteger(n) && n >= 0 && n <= 6));
-    if (Array.isArray(t.avkrysset)) avkrysset = new Set(t.avkrysset.filter(x => typeof x === "string"));
-    if (Array.isArray(t.flyttet)) flyttet = new Set(t.flyttet.filter(x => typeof x === "string"));
-    if (!Array.isArray(t.plan)) return false;
-    const gyldig = (d, r, navn) => {
-      if (r < 0) return navn === null && kandidater(d).length === 0;
-      if (d === 4 && taco() >= 0) return r === taco();
-      return RETTER[r].fredag ? d === 4 : kandidater(d).includes(r);
-    };
-    const nyPlan = t.plan.map(x => {
-      if (!x || !Number.isInteger(x.d)) return null;
-      const r = x.r === null ? -1 : RETTER.findIndex(y => y.navn === x.r);
-      if (x.r !== null && r < 0) return null;
-      return gyldig(x.d, r, x.r) ? { d: x.d, r, lås: !!x.lås && r >= 0 && !RETTER[r].fredag } : null;
-    });
-    if (nyPlan.some(x => x === null)) return false;
-    const a = nyPlan.map(x => x.d).sort((m, n) => m - n).join(), b = [...valgt].sort((m, n) => m - n).join();
-    if (a !== b) return false;
-    plan = nyPlan;
-    return true;
+    return brukTilstand(t);
   } catch (e) { return false; }
 }
-const gjenopprettet = lastTilstand();
+function lagreEkstra(){ try { localStorage.setItem("ekstraVarer", JSON.stringify(ekstra)); } catch (e) {} }
+try {
+  const lagret = JSON.parse(localStorage.getItem("ekstraVarer") || "[]");
+  if (Array.isArray(lagret)) ekstra = lagret.filter(x => x && typeof x.n === "string" && Number.isInteger(x.kat) && x.kat >= 0 && x.kat < BUTIKK.length);
+} catch (e) {}
+const deltData = dekodFraHash();
+let gjenopprettet = false;
+if (deltData && brukTilstand(deltData)){
+  gjenopprettet = true;
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+} else {
+  gjenopprettet = lastTilstand();
+}
 DAGER.forEach((d, i) => {
   const l = document.createElement("label"); l.className = "chip";
   l.innerHTML = '<input type="checkbox"><span></span>';
@@ -325,11 +397,6 @@ DAGER.forEach((d, i) => {
   cb.onchange = () => { if (cb.checked) valgt.add(i); else valgt.delete(i); lagreTilstand(); };
   $("dager").appendChild(l);
 });
-function lagreEkstra(){ try { localStorage.setItem("ekstraVarer", JSON.stringify(ekstra)); } catch (e) {} }
-try {
-  const lagret = JSON.parse(localStorage.getItem("ekstraVarer") || "[]");
-  if (Array.isArray(lagret)) ekstra = lagret.filter(x => x && typeof x.n === "string" && Number.isInteger(x.kat) && x.kat >= 0 && x.kat < BUTIKK.length);
-} catch (e) {}
 [["Automatisk avdeling", -1], ...BUTIKK.map((n, i) => [n, i])].forEach(([t, v]) => {
   const o = document.createElement("option"); o.value = v; o.textContent = t; $("eAvd").appendChild(o);
 });
@@ -342,7 +409,7 @@ function leggTilEkstra(){
 }
 $("eLegg").onclick = leggTilEkstra;
 $("eNavn").onkeydown = e => { if (e.key === "Enter"){ e.preventDefault(); leggTilEkstra(); } };
-$("lag").onclick = lagPlan; $("kopier").onclick = kopier;
+$("lag").onclick = lagPlan; $("kopier").onclick = kopier; $("del").onclick = delUken;
 $("pers").onchange = tegn;
 if (gjenopprettet) tegn(); else lagPlan();
 </script>
